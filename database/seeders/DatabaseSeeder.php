@@ -14,12 +14,12 @@ class DatabaseSeeder extends Seeder
         $this->call([AttendanceStatusSeeder::class]);
 
         $admin = User::factory()->admin()->create([
-            'name' => 'مدير النظام',
+            'name' => 'System Administrator',
             'email' => 'admin@example.com',
         ]);
 
         $teacher = User::factory()->create([
-            'name' => 'معلم تجريبي',
+            'name' => 'Demo Teacher',
             'email' => 'teacher@example.com',
         ]);
 

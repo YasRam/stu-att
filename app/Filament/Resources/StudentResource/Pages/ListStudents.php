@@ -18,19 +18,19 @@ class ListStudents extends ListRecords
     {
         return [
             Actions\Action::make('export')
-                ->label('تصدير Excel')
+                ->label(__('Export Excel'))
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('gray')
                 ->action(function () {
-                    return Excel::download(new StudentsExport(), 'الطلاب-' . now()->format('Y-m-d') . '.xlsx');
+                    return Excel::download(new StudentsExport(), __('Students') . '-' . now()->format('Y-m-d') . '.xlsx');
                 }),
             Actions\Action::make('import')
-                ->label('استيراد Excel')
+                ->label(__('Import Excel'))
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('gray')
                 ->form([
                     \Filament\Forms\Components\FileUpload::make('file')
-                        ->label('ملف Excel')
+                        ->label(__('Excel file'))
                         ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'])
                         ->required()
                         ->storeFiles(false),
@@ -41,12 +41,12 @@ class ListStudents extends ListRecords
                         Excel::import(new StudentsImport(), $file->getRealPath());
                     }
                     \Filament\Notifications\Notification::make()
-                        ->title('تم الاستيراد بنجاح')
+                        ->title(__('Import successful'))
                         ->success()
                         ->send();
                     $this->redirect(static::getUrl());
                 }),
-            Actions\CreateAction::make()->label('إضافة طالب'),
+            Actions\CreateAction::make()->label(__('Add student')),
         ];
     }
 }

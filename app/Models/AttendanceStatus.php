@@ -23,6 +23,11 @@ class AttendanceStatus extends Model
         ];
     }
 
+    public function getTranslatedNameAttribute(): string
+    {
+        return app()->getLocale() === 'ar' ? ($this->name_ar ?? $this->name_en) : ($this->name_en ?? $this->name_ar);
+    }
+
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);

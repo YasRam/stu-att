@@ -19,34 +19,49 @@ class DailySessionResource extends Resource
     protected static ?string $model = DailySession::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
-    protected static ?string $navigationLabel = 'الحصص اليومية';
-    protected static ?string $modelLabel = 'حصة';
-    protected static ?string $pluralModelLabel = 'الحصص اليومية';
+    protected static ?string $navigationLabel = 'Daily Sessions';
+    protected static ?string $modelLabel = 'Session';
+    protected static ?string $pluralModelLabel = 'Daily Sessions';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Daily Sessions');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Session');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Daily Sessions');
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\DatePicker::make('session_date')
-                    ->label('تاريخ الحصة')
+                    ->label(__('Session date'))
                     ->required()
                     ->native(false)
                     ->default(now()),
                 Forms\Components\TextInput::make('subject_name')
-                    ->label('المادة')
+                    ->label(__('Subject'))
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('stage_or_group')
-                    ->label('المرحلة / المجموعة')
+                    ->label(__('Stage or Group'))
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Select::make('status')
-                    ->label('الحالة')
+                    ->label(__('Status'))
                     ->options(collect(SessionStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all())
                     ->default(SessionStatus::Normal->value)
                     ->native(false),
                 Forms\Components\Select::make('teacher_id')
-                    ->label('المعلم')
+                    ->label(__('Teacher'))
                     ->options(function () {
                         $q = User::query();
                         if (!auth()->user()?->isAdmin()) {
@@ -66,17 +81,17 @@ class DailySessionResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('session_date')
-                    ->label('التاريخ')
+                    ->label(__('Date'))
                     ->date('Y-m-d')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('subject_name')
-                    ->label('المادة')
+                    ->label(__('Subject'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('stage_or_group')
-                    ->label('المرحلة/المجموعة')
+                    ->label(__('Stage or Group'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
-                    ->label('الحالة')
+                    ->label(__('Status'))
                     ->formatStateUsing(fn ($state) => $state instanceof SessionStatus ? $state->label() : (SessionStatus::tryFrom($state)?->label() ?? $state))
                     ->badge()
                     ->color(fn ($state) => match ($state?->value ?? $state) {
@@ -85,12 +100,12 @@ class DailySessionResource extends Resource
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('teacher.name')
-                    ->label('المعلم'),
+                    ->label(__('Teacher')),
             ])
             ->defaultSort('session_date', 'desc')
             ->filters([
                 Tables\Filters\Filter::make('my_sessions')
-                    ->label('حصصي فقط')
+                    ->label(__('My sessions only'))
                     ->query(fn (Builder $q) => auth()->user()?->isAdmin() ? $q : $q->where('teacher_id', auth()->id()))
                     ->default(fn () => !auth()->user()?->isAdmin()),
             ])

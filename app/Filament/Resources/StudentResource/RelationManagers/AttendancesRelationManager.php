@@ -13,7 +13,7 @@ class AttendancesRelationManager extends RelationManager
 {
     protected static string $relationship = 'attendances';
 
-    protected static ?string $title = 'سجل الحضور';
+    protected static ?string $title = 'Attendance record';
 
     protected static ?string $recordTitleAttribute = 'id';
 
@@ -22,25 +22,31 @@ class AttendancesRelationManager extends RelationManager
         return $form->schema([]);
     }
 
+    public static function getTitle(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): string
+    {
+        return __('Attendance record');
+    }
+
     public function table(Table $table): Table
     {
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('dailySession.session_date')
-                    ->label('التاريخ')
+                    ->label(__('Date'))
                     ->date('Y-m-d')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('dailySession.subject_name')
-                    ->label('المادة'),
-                Tables\Columns\TextColumn::make('attendanceStatus.name_ar')
-                    ->label('الحالة')
+                    ->label(__('Subject')),
+                Tables\Columns\TextColumn::make('attendanceStatus')
+                    ->label(__('Status'))
+                    ->formatStateUsing(fn ($state) => $state?->translated_name ?? '—')
                     ->badge()
                     ->color(fn ($record) => $record->attendanceStatus?->color ?? 'gray'),
                 Tables\Columns\TextColumn::make('reason')
-                    ->label('السبب')
+                    ->label(__('Reason'))
                     ->limit(30),
                 Tables\Columns\TextColumn::make('taken_at')
-                    ->label('تاريخ التسجيل')
+                    ->label(__('Time taken'))
                     ->dateTime()
                     ->sortable(),
             ])

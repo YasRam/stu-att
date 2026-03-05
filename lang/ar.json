@@ -74,5 +74,17 @@
     "Set status for selected": "تحديد الحالة للمحددين",
     "Attendance record": "سجل الحضور",
     "Add record": "إضافة تسجيل",
-    "Time taken": "وقت التسجيل"
+    "Time taken": "وقت التسجيل",
+    "Normal": "عادي",
+    "Exam": "امتحان",
+    "Cancelled": "ملغى",
+    "Other": "أخرى",
+    "Admin": "مدير",
+    "Teacher": "معلم",
+    "System Administrator": "مدير النظام",
+    "Demo Teacher": "معلم تجريبي",
+    "Profile photo": "صورة الملف الشخصي",
+    "Import successful": "تم الاستيراد بنجاح",
+    "Saved": "تم الحفظ",
+    "Updated :count students": "تم تحديث :count طالب"
 }

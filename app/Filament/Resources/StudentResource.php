@@ -104,49 +104,49 @@ class StudentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('full_name')
-                    ->label('الاسم')
+                    ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('national_id')
-                    ->label('الرقم القومي')
+                    ->label(__('National ID'))
                     ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('birth_date')
-                    ->label('تاريخ الميلاد')
+                    ->label(__('Birth date'))
                     ->date('Y-m-d')
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('gender')
-                    ->label('النوع')
-                    ->formatStateUsing(fn (?string $state) => $state === 'M' ? 'ذكر' : ($state === 'F' ? 'أنثى' : '-'))
+                    ->label(__('Gender'))
+                    ->formatStateUsing(fn (?string $state) => $state === 'M' ? __('Male') : ($state === 'F' ? __('Female') : '-'))
                     ->badge()
                     ->color(fn (?string $state) => $state === 'M' ? 'info' : 'success')
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('stage')
-                    ->label('المرحلة')
+                    ->label(__('Stage'))
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('group_name')
-                    ->label('المجموعة')
+                    ->label(__('Group'))
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\IconColumn::make('is_taasis')
-                    ->label('تأسيس')
+                    ->label(__('Taasis'))
                     ->boolean()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_azhary')
-                    ->label('أزهري')
+                    ->label(__('Azhary'))
                     ->boolean()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('absent_30')
-                    ->label('غائب 30 يوم')
+                    ->label(__('Absent 30 days'))
                     ->getStateUsing(fn (Student $record) => $record->absentCountLast30Days())
                     ->badge()
                     ->color(fn (Student $record) => $record->absentCountLast30Days() > 5 ? 'danger' : 'gray'),
                 Tables\Columns\TextColumn::make('absent_year')
-                    ->label('غائب السنة')
+                    ->label(__('Absent year'))
                     ->getStateUsing(fn (Student $record) => $record->absentCountThisYear())
                     ->badge()
                     ->color(fn (Student $record) => $record->absentCountThisYear() > 15 ? 'danger' : 'gray'),
@@ -154,18 +154,18 @@ class StudentResource extends Resource
             ->defaultSort('group_name')
             ->filters([
                 Tables\Filters\SelectFilter::make('group_name')
-                    ->label('المجموعة')
+                    ->label(__('Group'))
                     ->options(fn () => Student::query()->distinct()->pluck('group_name', 'group_name')->filter()),
                 Tables\Filters\SelectFilter::make('stage')
-                    ->label('المرحلة')
+                    ->label(__('Stage'))
                     ->options(fn () => Student::query()->distinct()->pluck('stage', 'stage')->filter()),
                 Tables\Filters\TernaryFilter::make('high_absence')
-                    ->label('تنبيه غياب')
+                    ->label(__('Absence warning'))
                     ->queries(
                         true: fn (Builder $q) => $q->withHighAbsenceWarning(),
                         false: fn (Builder $q) => $q,
                     )
-                    ->placeholder('الكل'),
+                    ->placeholder(__('All')),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -183,24 +183,24 @@ class StudentResource extends Resource
     {
         return $infolist
             ->schema([
-                InfolistComponents\Section::make('البيانات الأساسية')
+                InfolistComponents\Section::make(__('Basic Data'))
                     ->schema([
-                        InfolistComponents\TextEntry::make('full_name')->label('الاسم الكامل'),
-                        InfolistComponents\TextEntry::make('national_id')->label('الرقم القومي'),
-                        InfolistComponents\TextEntry::make('birth_date')->label('تاريخ الميلاد')->date('Y-m-d'),
-                        InfolistComponents\TextEntry::make('gender')->label('النوع')->formatStateUsing(fn ($state) => $state === 'M' ? 'ذكر' : ($state === 'F' ? 'أنثى' : '-')),
-                        InfolistComponents\TextEntry::make('stage')->label('المرحلة'),
-                        InfolistComponents\TextEntry::make('group_name')->label('المجموعة'),
-                        InfolistComponents\IconEntry::make('is_taasis')->label('تأسيس')->boolean(),
-                        InfolistComponents\IconEntry::make('is_azhary')->label('أزهري')->boolean(),
+                        InfolistComponents\TextEntry::make('full_name')->label(__('Full name')),
+                        InfolistComponents\TextEntry::make('national_id')->label(__('National ID')),
+                        InfolistComponents\TextEntry::make('birth_date')->label(__('Birth date'))->date('Y-m-d'),
+                        InfolistComponents\TextEntry::make('gender')->label(__('Gender'))->formatStateUsing(fn ($state) => $state === 'M' ? __('Male') : ($state === 'F' ? __('Female') : '-')),
+                        InfolistComponents\TextEntry::make('stage')->label(__('Stage')),
+                        InfolistComponents\TextEntry::make('group_name')->label(__('Group')),
+                        InfolistComponents\IconEntry::make('is_taasis')->label(__('Taasis'))->boolean(),
+                        InfolistComponents\IconEntry::make('is_azhary')->label(__('Azhary'))->boolean(),
                     ])->columns(2),
-                InfolistComponents\Section::make('إحصائيات الحضور')
+                InfolistComponents\Section::make(__('Attendance stats'))
                     ->schema([
                         InfolistComponents\TextEntry::make('total_sessions')
-                            ->label('إجمالي الحصص')
+                            ->label(__('Total sessions'))
                             ->state(fn (Student $record) => $record->attendances()->count()),
                         InfolistComponents\TextEntry::make('present_percent')
-                            ->label('نسبة الحضور %')
+                            ->label(__('Attendance %'))
                             ->state(function (Student $record) {
                                 $total = $record->attendances()->count();
                                 if ($total === 0) return '-';
@@ -208,19 +208,19 @@ class StudentResource extends Resource
                                 return round($present / $total * 100, 1) . '%';
                             }),
                         InfolistComponents\TextEntry::make('absences_count')
-                            ->label('عدد الغياب')
+                            ->label(__('Absences count'))
                             ->state(fn (Student $record) => $record->attendances()->whereHas('attendanceStatus', fn ($q) => $q->where('is_absent', true))->count()),
                         InfolistComponents\TextEntry::make('warning')
-                            ->label('تنبيه')
-                            ->state(fn (Student $record) => $record->hasHighAbsenceWarning() ? 'نعم — غياب مرتفع' : 'لا')
+                            ->label(__('Warning'))
+                            ->state(fn (Student $record) => $record->hasHighAbsenceWarning() ? __('Yes — high absence') : __('No'))
                             ->color(fn (Student $record) => $record->hasHighAbsenceWarning() ? 'danger' : 'gray'),
                     ])->columns(2),
-                InfolistComponents\Section::make('ولي الأمر')
+                InfolistComponents\Section::make(__('Guardian & Contact'))
                     ->schema([
-                        InfolistComponents\TextEntry::make('phone')->label('الهاتف'),
-                        InfolistComponents\TextEntry::make('guardian_name')->label('ولي الأمر'),
-                        InfolistComponents\TextEntry::make('guardian_phone')->label('هاتف ولي الأمر'),
-                        InfolistComponents\TextEntry::make('notes')->label('ملاحظات')->columnSpanFull(),
+                        InfolistComponents\TextEntry::make('phone')->label(__('Phone')),
+                        InfolistComponents\TextEntry::make('guardian_name')->label(__('Guardian')),
+                        InfolistComponents\TextEntry::make('guardian_phone')->label(__('Guardian phone')),
+                        InfolistComponents\TextEntry::make('notes')->label(__('Notes'))->columnSpanFull(),
                     ])->columns(2)->collapsed(),
             ]);
     }

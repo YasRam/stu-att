@@ -74,5 +74,17 @@
     "Set status for selected": "Set status for selected",
     "Attendance record": "Attendance record",
     "Add record": "Add record",
-    "Time taken": "Time taken"
+    "Time taken": "Time taken",
+    "Normal": "Normal",
+    "Exam": "Exam",
+    "Cancelled": "Cancelled",
+    "Other": "Other",
+    "Admin": "Admin",
+    "Teacher": "Teacher",
+    "System Administrator": "System Administrator",
+    "Demo Teacher": "Demo Teacher",
+    "Profile photo": "Profile photo",
+    "Import successful": "Import successful",
+    "Saved": "Saved",
+    "Updated :count students": "Updated :count student(s)"
 }

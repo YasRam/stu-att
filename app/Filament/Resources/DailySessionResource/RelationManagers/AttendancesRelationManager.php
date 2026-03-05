@@ -16,7 +16,12 @@ class AttendancesRelationManager extends RelationManager
 {
     protected static string $relationship = 'attendances';
 
-    protected static ?string $title = 'سجل الحضور';
+    protected static ?string $title = 'Attendance record';
+
+    public static function getTitle(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): string
+    {
+        return __('Attendance record');
+    }
 
     public function form(Form $form): Form
     {
@@ -27,28 +32,29 @@ class AttendancesRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('student.full_name')->label('الطالب')->searchable(),
-                Tables\Columns\TextColumn::make('attendanceStatus.name_ar')
-                    ->label('الحالة')
+                Tables\Columns\TextColumn::make('student.full_name')->label(__('Student'))->searchable(),
+                Tables\Columns\TextColumn::make('attendanceStatus')
+                    ->label(__('Status'))
+                    ->formatStateUsing(fn ($state) => $state?->translated_name ?? '—')
                     ->badge()
                     ->color(fn ($record) => $record->attendanceStatus?->color ?? 'gray'),
-                Tables\Columns\TextColumn::make('reason')->label('السبب')->limit(40),
-                Tables\Columns\TextColumn::make('taken_at')->label('وقت التسجيل')->dateTime(),
+                Tables\Columns\TextColumn::make('reason')->label(__('Reason'))->limit(40),
+                Tables\Columns\TextColumn::make('taken_at')->label(__('Time taken'))->dateTime(),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('إضافة تسجيل')
+                    ->label(__('Add record'))
                     ->form([
                         Forms\Components\Select::make('student_id')
-                            ->label('الطالب')
+                            ->label(__('Student'))
                             ->options(fn () => Student::query()->where('group_name', $this->getOwnerRecord()->stage_or_group)->pluck('full_name', 'id'))
                             ->required()
                             ->searchable(),
                         Forms\Components\Select::make('attendance_status_id')
-                            ->label('الحالة')
-                            ->options(AttendanceStatus::pluck('name_ar', 'id'))
+                            ->label(__('Status'))
+                            ->options(fn () => AttendanceStatus::all()->mapWithKeys(fn ($s) => [$s->id => $s->translated_name])->all())
                             ->required(),
-                        Forms\Components\Textarea::make('reason')->label('السبب'),
+                        Forms\Components\Textarea::make('reason')->label(__('Reason')),
                     ])
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['taken_at'] = now();
@@ -60,10 +66,10 @@ class AttendancesRelationManager extends RelationManager
                 Tables\Actions\EditAction::make()
                     ->form([
                         Forms\Components\Select::make('attendance_status_id')
-                            ->label('الحالة')
-                            ->options(AttendanceStatus::pluck('name_ar', 'id'))
+                            ->label(__('Status'))
+                            ->options(fn () => AttendanceStatus::all()->mapWithKeys(fn ($s) => [$s->id => $s->translated_name])->all())
                             ->required(),
-                        Forms\Components\Textarea::make('reason')->label('السبب'),
+                        Forms\Components\Textarea::make('reason')->label(__('Reason')),
                     ]),
             ])
             ->bulkActions([]);

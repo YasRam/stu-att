@@ -12,10 +12,10 @@ enum SessionStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Normal => 'عادي',
-            self::Exam => 'امتحان',
-            self::Cancelled => 'ملغى',
-            self::Other => 'أخرى',
+            self::Normal => __('Normal'),
+            self::Exam => __('Exam'),
+            self::Cancelled => __('Cancelled'),
+            self::Other => __('Other'),
         };
     }
 }
