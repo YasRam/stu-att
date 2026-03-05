@@ -26,8 +26,18 @@ class MarkAttendance extends Page implements HasForms, HasTable
     use InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
-    protected static ?string $navigationLabel = 'تسجيل الحضور';
-    protected static ?string $title = 'تسجيل الحضور اليومي';
+    protected static ?string $navigationLabel = 'Mark Attendance';
+    protected static ?string $title = 'Mark Daily Attendance';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Mark Attendance');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Mark Daily Attendance');
+    }
     protected static string $view = 'filament.pages.mark-attendance';
     protected static ?int $navigationSort = 2;
 
@@ -49,18 +59,18 @@ class MarkAttendance extends Page implements HasForms, HasTable
             ->statePath('sessionFilter')
             ->schema([
                 DatePicker::make('session_date')
-                    ->label('التاريخ')
+                    ->label(__('Date'))
                     ->required()
                     ->native(false)
                     ->reactive(),
                 Select::make('group_name')
-                    ->label('المجموعة')
+                    ->label(__('Group'))
                     ->options($groups)
                     ->required()
                     ->searchable()
                     ->reactive(),
                 TextInput::make('subject_name')
-                    ->label('المادة')
+                    ->label(__('Subject'))
                     ->required()
                     ->maxLength(255),
             ]);
@@ -71,10 +81,10 @@ class MarkAttendance extends Page implements HasForms, HasTable
         return $table
             ->query($this->getStudentsQuery())
             ->columns([
-                TextColumn::make('full_name')->label('الطالب')->searchable(),
-                TextColumn::make('national_id')->label('الرقم القومي')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('full_name')->label(__('Student'))->searchable(),
+                TextColumn::make('national_id')->label(__('National ID'))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('current_status')
-                    ->label('الحالة')
+                    ->label(__('Status'))
                     ->badge()
                     ->color(function (Student $record) {
                         $a = $this->getAttendanceFor($record);
@@ -82,22 +92,22 @@ class MarkAttendance extends Page implements HasForms, HasTable
                     })
                     ->getStateUsing(function (Student $record) {
                         $a = $this->getAttendanceFor($record);
-                        return $a?->attendanceStatus?->name_ar ?? '—';
+                        return $a?->attendanceStatus?->translated_name ?? '—';
                     }),
                 TextColumn::make('current_reason')
-                    ->label('السبب')
+                    ->label(__('Reason'))
                     ->getStateUsing(fn (Student $record) => $this->getAttendanceFor($record)?->reason ?? ''),
             ])
             ->headerActions([])
             ->actions([
                 \Filament\Tables\Actions\Action::make('setStatus')
-                    ->label('تعديل')
+                    ->label(__('Edit'))
                     ->form([
                         Select::make('attendance_status_id')
-                            ->label('الحالة')
-                            ->options(AttendanceStatus::pluck('name_ar', 'id'))
+                            ->label(__('Status'))
+                            ->options(fn () => AttendanceStatus::all()->mapWithKeys(fn ($s) => [$s->id => $s->translated_name])->all())
                             ->required(),
-                        \Filament\Forms\Components\Textarea::make('reason')->label('السبب'),
+                        \Filament\Forms\Components\Textarea::make('reason')->label(__('Reason')),
                     ])
                     ->action(function (Student $record, array $data) {
                         $session = $this->getOrCreateSession();
@@ -111,19 +121,19 @@ class MarkAttendance extends Page implements HasForms, HasTable
                                 'taken_by' => auth()->id(),
                             ]
                         );
-                        Notification::make()->title('تم الحفظ')->success()->send();
+                        Notification::make()->title(__('Saved'))->success()->send();
                     }),
             ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkAction::make('setBulkStatus')
-                    ->label('تحديد الحالة للمحددين')
+                    ->label(__('Set status for selected'))
                     ->icon('heroicon-o-check-circle')
                     ->form([
                         Select::make('attendance_status_id')
-                            ->label('الحالة')
-                            ->options(AttendanceStatus::pluck('name_ar', 'id'))
+                            ->label(__('Status'))
+                            ->options(fn () => AttendanceStatus::all()->mapWithKeys(fn ($s) => [$s->id => $s->translated_name])->all())
                             ->required(),
-                        \Filament\Forms\Components\Textarea::make('reason')->label('السبب'),
+                        \Filament\Forms\Components\Textarea::make('reason')->label(__('Reason')),
                     ])
                     ->action(function (\Illuminate\Support\Collection $records, array $data) {
                         $session = $this->getOrCreateSession();
@@ -139,7 +149,7 @@ class MarkAttendance extends Page implements HasForms, HasTable
                                 ]
                             );
                         }
-                        Notification::make()->title('تم تحديث ' . $records->count() . ' طالب')->success()->send();
+                        Notification::make()->title(__('Updated :count students', ['count' => $records->count()]))->success()->send();
                     }),
             ])
             ->striped();
