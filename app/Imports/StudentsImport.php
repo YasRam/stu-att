@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Models\EnrollmentStatus;
+use App\Models\Stage;
 use App\Models\Student;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -11,41 +13,56 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 class StudentsImport implements ToCollection, WithHeadingRow, WithValidation
 {
     /**
-     * Expects Arabic or English headers. We use first row as headers.
-     * Headings will be slugged (e.g. "الاسم الكامل" -> keys in Arabic or use column index).
-     * Using column index via ToModel is simpler; WithHeadingRow with Arabic may need custom mapping.
+     * Expects Arabic or English headers. Stage can be given by name_ar (e.g. "3 ب"); we resolve to stage_id.
      */
     public function collection(Collection $rows): void
     {
-        $headers = ['الاسم الكامل', 'الرقم القومي', 'تاريخ الميلاد', 'النوع', 'المرحلة', 'المجموعة', 'تأسيس', 'أزهري', 'الهاتف', 'ولي الأمر', 'هاتف ولي الأمر', 'رقم قومي ولي الأمر', 'ملاحظات'];
+        $headers = ['الاسم الكامل', 'الرقم القومي', 'تاريخ الميلاد', 'النوع', 'المرحلة', 'حالة القبول', 'الهاتف', 'الجوال', 'ملاحظات'];
         foreach ($rows as $row) {
             $arr = is_array($row) ? $row : $row->toArray();
             $fullName = $arr[$headers[0]] ?? $arr['full_name'] ?? $arr[0] ?? null;
             $nationalId = $arr[$headers[1]] ?? $arr['national_id'] ?? $arr[1] ?? null;
-            if (!$fullName || !$nationalId) {
+            if (!$fullName) {
                 continue;
             }
-            $nationalId = preg_replace('/\D/', '', (string) $nationalId);
-            if (strlen($nationalId) !== 14) {
+            $nationalId = $nationalId ? preg_replace('/\D/', '', (string) $nationalId) : null;
+            if ($nationalId && strlen($nationalId) !== 14) {
                 continue;
             }
-            Student::updateOrCreate(
-                ['national_id' => $nationalId],
-                [
-                    'full_name' => $fullName,
-                    'birth_date' => $this->parseDate($arr[$headers[2]] ?? $arr[2] ?? null),
-                    'gender' => $this->parseGender($arr[$headers[3]] ?? $arr[3] ?? null),
-                    'stage' => $arr[$headers[4]] ?? $arr[4] ?? null,
-                    'group_name' => $arr[$headers[5]] ?? $arr[5] ?? null,
-                    'is_taasis' => $this->parseBool($arr[$headers[6]] ?? $arr[6] ?? false),
-                    'is_azhary' => $this->parseBool($arr[$headers[7]] ?? $arr[7] ?? false),
-                    'phone' => $arr[$headers[8]] ?? $arr[8] ?? null,
-                    'guardian_name' => $arr[$headers[9]] ?? $arr[9] ?? null,
-                    'guardian_phone' => $arr[$headers[10]] ?? $arr[10] ?? null,
-                    'guardian_national_id' => $arr[$headers[11]] ?? $arr[11] ?? null,
-                    'notes' => $arr[$headers[12]] ?? $arr[12] ?? null,
-                ]
-            );
+            $stageName = $arr[$headers[4]] ?? $arr[4] ?? null;
+            $stageId = null;
+            if ($stageName) {
+                $stage = Stage::query()->where('name_ar', $stageName)->orWhere('name_en', $stageName)->first();
+                $stageId = $stage?->id;
+            }
+            $stageId = $stageId ?? Stage::query()->orderBy('order_index')->first()?->id;
+            if (!$stageId) {
+                continue;
+            }
+            $enrollmentStatusName = $arr[$headers[5]] ?? $arr[5] ?? 'انتظار';
+            $enrollmentStatus = EnrollmentStatus::query()
+                ->where('name_ar', $enrollmentStatusName)
+                ->orWhere('name_en', $enrollmentStatusName)
+                ->first();
+            $enrollmentStatusId = $enrollmentStatus?->id ?? EnrollmentStatus::query()->where('name_ar', 'انتظار')->value('id') ?? 1;
+
+            $data = array_filter([
+                'full_name' => $fullName,
+                'national_id' => $nationalId ?: null,
+                'birth_date' => $this->parseDate($arr[$headers[2]] ?? $arr[2] ?? null),
+                'gender' => $this->parseGender($arr[$headers[3]] ?? $arr[3] ?? null),
+                'stage_id' => $stageId,
+                'enrollment_status_id' => $enrollmentStatusId,
+                'phone' => $arr[$headers[6]] ?? $arr[6] ?? null,
+                'mobile' => $arr[$headers[7]] ?? $arr[7] ?? null,
+                'notes' => $arr[$headers[8]] ?? $arr[8] ?? null,
+            ]);
+
+            if ($nationalId) {
+                Student::updateOrCreate(['national_id' => $nationalId], $data);
+            } else {
+                Student::create($data);
+            }
         }
     }
 

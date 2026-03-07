@@ -11,7 +11,7 @@ class StudentsExport implements FromQuery, WithHeadings, WithMapping
 {
     public function query()
     {
-        return Student::query()->orderBy('group_name')->orderBy('full_name');
+        return Student::query()->with(['stage', 'enrollmentStatus'])->orderBy('stage_id')->orderBy('full_name');
     }
 
     public function headings(): array
@@ -22,13 +22,9 @@ class StudentsExport implements FromQuery, WithHeadings, WithMapping
             'تاريخ الميلاد',
             'النوع',
             'المرحلة',
-            'المجموعة',
-            'تأسيس',
-            'أزهري',
+            'حالة القبول',
             'الهاتف',
-            'ولي الأمر',
-            'هاتف ولي الأمر',
-            'رقم قومي ولي الأمر',
+            'الجوال',
             'ملاحظات',
         ];
     }
@@ -40,14 +36,10 @@ class StudentsExport implements FromQuery, WithHeadings, WithMapping
             $row->national_id,
             $row->birth_date?->format('Y-m-d'),
             $row->gender === 'M' ? 'ذكر' : ($row->gender === 'F' ? 'أنثى' : ''),
-            $row->stage,
-            $row->group_name,
-            $row->is_taasis ? 'نعم' : 'لا',
-            $row->is_azhary ? 'نعم' : 'لا',
+            $row->stage?->name_ar ?? '',
+            $row->enrollmentStatus?->name_ar ?? '',
             $row->phone,
-            $row->guardian_name,
-            $row->guardian_phone,
-            $row->guardian_national_id,
+            $row->mobile,
             $row->notes,
         ];
     }

@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\StudentResource\Pages;
 use App\Filament\Resources\StudentResource\RelationManagers\AttendancesRelationManager;
+use App\Models\EnrollmentStatus;
+use App\Models\Stage;
 use App\Models\Student;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -62,37 +64,51 @@ class StudentResource extends Resource
                             ->label(__('Gender'))
                             ->options(['M' => __('Male'), 'F' => __('Female')])
                             ->native(false),
-                        Forms\Components\TextInput::make('stage')
+                        Forms\Components\Select::make('stage_id')
                             ->label(__('Stage'))
-                            ->maxLength(50),
-                        Forms\Components\TextInput::make('group_name')
-                            ->label(__('Group'))
-                            ->maxLength(255),
-                        Forms\Components\Toggle::make('is_taasis')
-                            ->label(__('Taasis'))
-                            ->default(false),
-                        Forms\Components\Toggle::make('is_azhary')
-                            ->label(__('Azhary'))
-                            ->default(false),
-                    ])->columns(2),
-                Forms\Components\Section::make(__('Guardian & Contact'))
-                    ->schema([
+                            ->relationship('stage', 'name_ar')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->native(false),
                         Forms\Components\TextInput::make('phone')
                             ->label(__('Phone'))
                             ->tel()
-                            ->maxLength(20),
-                        Forms\Components\TextInput::make('guardian_name')
-                            ->label(__('Guardian name'))
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('guardian_phone')
-                            ->label(__('Guardian phone'))
+                            ->maxLength(11),
+                        Forms\Components\TextInput::make('mobile')
+                            ->label(__('Mobile'))
                             ->tel()
-                            ->maxLength(20),
-                        Forms\Components\TextInput::make('guardian_national_id')
-                            ->label(__('Guardian National ID'))
-                            ->length(14)
-                            ->numeric(),
+                            ->maxLength(11),
+                        Forms\Components\TextInput::make('relative_phone')
+                            ->label(__('Relative phone'))
+                            ->tel()
+                            ->maxLength(11),
+                        Forms\Components\TextInput::make('school_name')
+                            ->label(__('School name'))
+                            ->maxLength(255),
+                        Forms\Components\Select::make('student_type')
+                            ->label(__('Student type'))
+                            ->options(['مستجد' => 'مستجد', 'مقيد' => 'مقيد'])
+                            ->default('مستجد')
+                            ->native(false),
+                        Forms\Components\Select::make('enrollment_status_id')
+                            ->label(__('Enrollment status'))
+                            ->options(fn () => EnrollmentStatus::query()->orderBy('order_index')->pluck('name_ar', 'id')->toArray())
+                            ->default(1)
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->native(false),
                     ])->columns(2),
+                Forms\Components\Section::make(__('Guardian & Contact'))
+                    ->schema([
+                        Forms\Components\Textarea::make('address')
+                            ->label(__('Address'))
+                            ->columnSpanFull(),
+                        Forms\Components\Textarea::make('important_notes')
+                            ->label(__('Important notes'))
+                            ->columnSpanFull(),
+                    ]),
                 Forms\Components\Textarea::make('notes')
                     ->label(__('Notes'))
                     ->columnSpanFull(),
@@ -122,24 +138,16 @@ class StudentResource extends Resource
                     ->badge()
                     ->color(fn (?string $state) => $state === 'M' ? 'info' : 'success')
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('stage')
+                Tables\Columns\TextColumn::make('stage.name_ar')
                     ->label(__('Stage'))
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('group_name')
-                    ->label(__('Group'))
-                    ->searchable()
+                Tables\Columns\TextColumn::make('enrollmentStatus.name_ar')
+                    ->label(__('Enrollment status'))
+                    ->badge()
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\IconColumn::make('is_taasis')
-                    ->label(__('Taasis'))
-                    ->boolean()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\IconColumn::make('is_azhary')
-                    ->label(__('Azhary'))
-                    ->boolean()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('absent_30')
                     ->label(__('Absent 30 days'))
                     ->getStateUsing(fn (Student $record) => $record->absentCountLast30Days())
@@ -151,14 +159,13 @@ class StudentResource extends Resource
                     ->badge()
                     ->color(fn (Student $record) => $record->absentCountThisYear() > 15 ? 'danger' : 'gray'),
             ])
-            ->defaultSort('group_name')
+            ->defaultSort('stage_id')
             ->filters([
-                Tables\Filters\SelectFilter::make('group_name')
-                    ->label(__('Group'))
-                    ->options(fn () => Student::query()->distinct()->pluck('group_name', 'group_name')->filter()),
-                Tables\Filters\SelectFilter::make('stage')
+                Tables\Filters\SelectFilter::make('stage_id')
                     ->label(__('Stage'))
-                    ->options(fn () => Student::query()->distinct()->pluck('stage', 'stage')->filter()),
+                    ->relationship('stage', 'name_ar')
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\TernaryFilter::make('high_absence')
                     ->label(__('Absence warning'))
                     ->queries(
@@ -189,10 +196,10 @@ class StudentResource extends Resource
                         InfolistComponents\TextEntry::make('national_id')->label(__('National ID')),
                         InfolistComponents\TextEntry::make('birth_date')->label(__('Birth date'))->date('Y-m-d'),
                         InfolistComponents\TextEntry::make('gender')->label(__('Gender'))->formatStateUsing(fn ($state) => $state === 'M' ? __('Male') : ($state === 'F' ? __('Female') : '-')),
-                        InfolistComponents\TextEntry::make('stage')->label(__('Stage')),
-                        InfolistComponents\TextEntry::make('group_name')->label(__('Group')),
-                        InfolistComponents\IconEntry::make('is_taasis')->label(__('Taasis'))->boolean(),
-                        InfolistComponents\IconEntry::make('is_azhary')->label(__('Azhary'))->boolean(),
+                        InfolistComponents\TextEntry::make('stage.name_ar')->label(__('Stage')),
+                        InfolistComponents\TextEntry::make('enrollmentStatus.name_ar')->label(__('Enrollment status')),
+                        InfolistComponents\TextEntry::make('phone')->label(__('Phone')),
+                        InfolistComponents\TextEntry::make('mobile')->label(__('Mobile')),
                     ])->columns(2),
                 InfolistComponents\Section::make(__('Attendance stats'))
                     ->schema([
@@ -217,11 +224,10 @@ class StudentResource extends Resource
                     ])->columns(2),
                 InfolistComponents\Section::make(__('Guardian & Contact'))
                     ->schema([
-                        InfolistComponents\TextEntry::make('phone')->label(__('Phone')),
-                        InfolistComponents\TextEntry::make('guardian_name')->label(__('Guardian')),
-                        InfolistComponents\TextEntry::make('guardian_phone')->label(__('Guardian phone')),
+                        InfolistComponents\TextEntry::make('address')->label(__('Address'))->columnSpanFull(),
+                        InfolistComponents\TextEntry::make('important_notes')->label(__('Important notes'))->columnSpanFull(),
                         InfolistComponents\TextEntry::make('notes')->label(__('Notes'))->columnSpanFull(),
-                    ])->columns(2)->collapsed(),
+                    ])->collapsed(),
             ]);
     }
 

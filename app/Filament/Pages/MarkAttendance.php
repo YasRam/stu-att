@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Attendance;
 use App\Models\AttendanceStatus;
 use App\Models\DailySession;
+use App\Models\Stage;
 use App\Models\Student;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -47,14 +48,14 @@ class MarkAttendance extends Page implements HasForms, HasTable
     {
         $this->sessionFilter = [
             'session_date' => now()->format('Y-m-d'),
-            'group_name' => null,
+            'stage_id' => null,
             'subject_name' => '',
         ];
     }
 
     public function form(Form $form): Form
     {
-        $groups = Student::query()->distinct()->pluck('group_name', 'group_name')->filter()->toArray();
+        $stages = Stage::query()->orderBy('order_index')->pluck('name_ar', 'id')->toArray();
         return $form
             ->statePath('sessionFilter')
             ->schema([
@@ -63,9 +64,9 @@ class MarkAttendance extends Page implements HasForms, HasTable
                     ->required()
                     ->native(false)
                     ->reactive(),
-                Select::make('group_name')
-                    ->label(__('Group'))
-                    ->options($groups)
+                Select::make('stage_id')
+                    ->label(__('Stage'))
+                    ->options($stages)
                     ->required()
                     ->searchable()
                     ->reactive(),
@@ -157,25 +158,26 @@ class MarkAttendance extends Page implements HasForms, HasTable
 
     protected function getStudentsQuery(): Builder
     {
-        $group = $this->sessionFilter['group_name'] ?? null;
-        if (!$group) {
+        $stageId = $this->sessionFilter['stage_id'] ?? null;
+        if (!$stageId) {
             return Student::query()->whereRaw('1 = 0');
         }
-        return Student::query()->where('group_name', $group)->orderBy('full_name');
+        return Student::query()->where('stage_id', $stageId)->orderBy('full_name');
     }
 
     protected function getOrCreateSession(): ?DailySession
     {
         $date = $this->sessionFilter['session_date'] ?? null;
-        $group = $this->sessionFilter['group_name'] ?? null;
+        $stageId = $this->sessionFilter['stage_id'] ?? null;
         $subject = $this->sessionFilter['subject_name'] ?? null;
-        if (!$date || !$group || !$subject) {
+        if (!$date || !$stageId || !$subject) {
             return null;
         }
+        $stageName = Stage::find($stageId)?->name_ar ?? (string) $stageId;
         return DailySession::firstOrCreate(
             [
                 'session_date' => $date,
-                'stage_or_group' => $group,
+                'stage_or_group' => $stageName,
                 'subject_name' => $subject,
                 'teacher_id' => auth()->id(),
             ],

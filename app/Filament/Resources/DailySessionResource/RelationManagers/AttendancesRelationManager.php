@@ -4,6 +4,7 @@ namespace App\Filament\Resources\DailySessionResource\RelationManagers;
 
 use App\Models\Attendance;
 use App\Models\AttendanceStatus;
+use App\Models\Stage;
 use App\Models\Student;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -47,7 +48,14 @@ class AttendancesRelationManager extends RelationManager
                     ->form([
                         Forms\Components\Select::make('student_id')
                             ->label(__('Student'))
-                            ->options(fn () => Student::query()->where('group_name', $this->getOwnerRecord()->stage_or_group)->pluck('full_name', 'id'))
+                            ->options(function () {
+                        $owner = $this->getOwnerRecord();
+                        $stage = Stage::query()->where('name_ar', $owner->stage_or_group)->orWhere('name_en', $owner->stage_or_group)->first();
+                        if (!$stage) {
+                            return [];
+                        }
+                        return Student::query()->where('stage_id', $stage->id)->pluck('full_name', 'id')->toArray();
+                    })
                             ->required()
                             ->searchable(),
                         Forms\Components\Select::make('attendance_status_id')

@@ -5,9 +5,9 @@
             {{ $this->form }}
         </x-filament::section>
 
-        @if($sessionFilter['group_name'] ?? null)
+        @if($sessionFilter['stage_id'] ?? null)
             <x-filament::section>
-                <x-slot name="heading">{{ __('Students —') }} {{ $sessionFilter['group_name'] }}</x-slot>
+                <x-slot name="heading">{{ __('Students —') }} {{ \App\Models\Stage::find($sessionFilter['stage_id'])?->name_ar ?? $sessionFilter['stage_id'] }}</x-slot>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     {{ __('Mark attendance hint') }}
                 </p>
